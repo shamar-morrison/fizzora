@@ -1,0 +1,126 @@
+@import 'tailwindcss';
+
+/* Registered so theme colors cross-fade instead of snapping. */
+@property --accent {
+  syntax: '<color>';
+  inherits: true;
+  initial-value: #e3173e;
+}
+@property --accent-light {
+  syntax: '<color>';
+  inherits: true;
+  initial-value: #ff6b81;
+}
+@property --accent-deep {
+  syntax: '<color>';
+  inherits: true;
+  initial-value: #6e0518;
+}
+@property --bg {
+  syntax: '<color>';
+  inherits: true;
+  initial-value: #1a0408;
+}
+@property --on-accent {
+  syntax: '<color>';
+  inherits: true;
+  initial-value: #ffffff;
+}
+
+@theme inline {
+  --font-display: 'Unbounded Variable', 'Arial Black', sans-serif;
+  --font-sans: 'Inter Variable', 'Helvetica Neue', Arial, sans-serif;
+  --color-accent: var(--accent);
+  --color-accent-light: var(--accent-light);
+  --color-accent-deep: var(--accent-deep);
+  --color-bg: var(--bg);
+  --color-on-accent: var(--on-accent);
+}
+
+:root {
+  color-scheme: dark;
+  transition:
+    --accent 0.9s ease,
+    --accent-light 0.9s ease,
+    --accent-deep 0.9s ease,
+    --bg 0.9s ease,
+    --on-accent 0.9s ease;
+}
+
+html {
+  background: var(--bg);
+  -webkit-tap-highlight-color: transparent;
+}
+
+html.scroll-locked,
+html.scroll-locked body {
+  overflow: hidden;
+  height: 100%;
+}
+
+body {
+  @apply font-sans text-white antialiased;
+  background: var(--bg);
+  overflow-x: hidden;
+  text-rendering: optimizeLegibility;
+}
+
+html.lenis,
+html.lenis body {
+  height: auto;
+}
+.lenis.lenis-smooth {
+  scroll-behavior: auto !important;
+}
+.lenis.lenis-stopped {
+  overflow: hidden;
+}
+
+::selection {
+  background: var(--accent);
+  color: var(--on-accent);
+}
+
+:focus-visible {
+  outline: 3px solid var(--accent-light);
+  outline-offset: 3px;
+  border-radius: 6px;
+}
+
+@layer components {
+  .btn-primary {
+    @apply inline-flex items-center gap-3 rounded-full px-6 py-3.5 font-display text-sm font-bold tracking-wide uppercase transition-[transform,box-shadow,background-color] duration-300;
+    background: var(--accent);
+    color: var(--on-accent);
+    box-shadow: 0 10px 40px -10px var(--accent);
+  }
+  .btn-primary:hover {
+    transform: translateY(-2px) scale(1.03);
+    box-shadow: 0 18px 50px -12px var(--accent);
+  }
+  .btn-primary:active {
+    transform: scale(0.98);
+  }
+  .btn-ghost {
+    @apply inline-flex size-12 items-center justify-center rounded-full border border-white/20 bg-white/5 text-white backdrop-blur-md transition-[transform,background-color,border-color] duration-300 hover:scale-105 hover:border-white/50 hover:bg-white/15 active:scale-95;
+  }
+  .glass {
+    @apply rounded-3xl border border-white/10 bg-black/35 backdrop-blur-xl;
+  }
+  .eyebrow {
+    @apply font-display text-[0.7rem] font-semibold tracking-[0.3em] text-accent-light uppercase;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    transition: none;
+  }
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+  }
+}
