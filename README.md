@@ -126,7 +126,7 @@ High-frequency values (scroll position, pointer, drag offset, the featured can's
 
 ### Bursts
 
-A splash is an event in the store (`fireBurst('small' | 'big' | 'finale')`). Subscribers (the crown, ribbon, droplets, fruit and fizz) each react independently at the can opening. Bursts fire:
+A splash is an event in the store (`fireBurst('small' | 'big' | 'finale')`). Subscribers (the liquid sim, the fruit and the fizz) each react independently at the can opening. Bursts fire:
 
 - big, when a drink is picked
 - small, when the drink changes after picking, and when the page settles into a new section
@@ -155,11 +155,14 @@ Reduced motion skips them all.
 Cherries, lime and orange wheels and wedges, blueberries, single grapes and grape clusters. Materials use clearcoat and sheen, normal maps with water beads and citrus peel pores, and segmented citrus cut faces with a soft emissive glow to suggest translucency.
 
 ### Liquid
-- On mid and high tiers, drei `MeshTransmissionMaterial` uses three's shared transmission pass, so all the liquid shares one extra render. It refracts and reflects the scene with slight chromatic aberration.
-- The **crown splash** is a displaced ring wall with a spiky rim.
-- The **ribbon** is a tapered tube that arcs out of the can, drawn head first and erased tail last.
-- **Droplets** are instanced and fall under gravity with drag, stretching along their velocity and shrinking out at the end of their life.
-- **Fizz** bubbles rise from the opening and swell just before they pop. **Blobs** float near the can and wobble.
+- On mid and high tiers, drei `MeshTransmissionMaterial` uses three's shared transmission pass, so all the liquid shares one extra render. The drink colour is split between the surface tint and absorption through the body (Beer–Lambert), so thick liquid is deep and saturated and thin edges stay light. A faint emissive stands in for light scattering inside the drink. There is no clearcoat and almost no dispersion, so it reads as soda rather than glass. The low tier uses a fresnel shader with a saturated core, a bright rim and a sharp glint.
+- **Splashes are a small particle sim** (`liquid/liquidPhysics.ts`). Parcels of liquid feel gravity and drag, pull on their neighbours (surface tension) and share velocity (viscosity). They are emitted from the drink opening along the can's own axis and inherit the can's motion.
+  - A pick throws a **crown** round the rim, with taller spikes whose tips fling drops, plus an arcing **jet** that stretches as its head outruns its tail. The finale fires two jets.
+  - A section change lets a small **overflow** well up out of the opening, spread across the lid, wrap over the rim and run down the can. It waits for the can to settle first.
+  - Parcels collide with the can (a capped cylinder in can space). Liquid on the can clings and is carried along with it. In the hero, drops landing on the floor burst into spray.
+- On mid and high tiers the joined-up parcels are drawn as **metaballs** (three's `MarchingCubes`), so streams neck and pinch into drops by themselves. Clumps whose fields don't touch are packed into up to three grids that refit to their clumps every frame, so detail stays fine as the splash spreads. Lone parcels, and every parcel on the low tier, are drawn as instanced teardrops.
+- **Spray** is instanced teardrops that trail their tails along their velocity. Parcels shed it in flight, on landing and when they die, and the fizz adds a fine spritz above the opening.
+- **Fizz** bubbles rise from the opening as thin films (clear centre, bright rim) and swell just before they pop. **Blobs** float near the can as clusters of orbiting metaballs that bud and pull back together (a wobbling icosphere on the low tier).
 
 ### Post-processing (high tier only)
 Bloom on highlights, depth of field that keeps the featured can sharp and softens distant cans, a soft reflective floor under the carousel, a vignette and SMAA.
@@ -173,6 +176,7 @@ The starting tier is guessed from the device: phones start on **low**, low-core 
 | | High | Mid | Low |
 | --- | --- | --- | --- |
 | Liquid | Transmission, full-resolution refraction | Transmission, half-resolution refraction | Fresnel + environment reflection shader |
+| Splash surface | Metaballs, 40³ grids | Metaballs, 30³ grids | Instanced drops |
 | Bloom, depth of field, SMAA, vignette | Yes | No | No |
 | Reflective floor | Yes | No | No |
 | Key-light shadows (desktop only) | Yes | Yes | No |
@@ -183,6 +187,7 @@ Particle and object budgets for each tier are in `src/lib/quality.ts`. Small scr
 
 Other measures:
 - Repeated objects (background cans, fruit, droplets, bubbles) are instanced.
+- The splash sim and its metaball grids do no work while no liquid is in the air. Metaball meshes start visible but empty, so their shaders compile with the rest of the scene before the loader hides.
 - Geometry, materials and every generated texture are created once and cached.
 - Texture generation yields between steps so the loader keeps animating.
 - Shaders compile before the loader hides.
@@ -240,7 +245,7 @@ src/
     sceneState.ts         Mutable per-frame shared state
     can/                  Can geometry and materials
     fruits/               Fruit geometry, materials, instanced swarm, section fruit
-    liquid/               Liquid material, crown, ribbon, droplets, fruit burst, fizz, blobs
+    liquid/               Liquid material, splash sim, metaball surface, spray, fruit burst, fizz, blobs
     lighting/             Environment, stage lights, backdrop, theme color easing
     ambient/              Floating cans, fruit and droplets
   sections/               Hero, FlavorStory, Ingredients, Nutrition, Features, FlavorWheel, ClosingCta

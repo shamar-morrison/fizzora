@@ -6,6 +6,7 @@ import { useQuality } from '../hooks/useQuality'
 import { smoothstep } from '../lib/math'
 import { createCanvas, toTexture } from '../lib/textures/canvas'
 import { useAppStore } from '../store/useAppStore'
+import { sceneState } from './sceneState'
 
 /** Radial alpha so the floor melts into the backdrop instead of ending in a hard horizon. */
 function useFloorFade() {
@@ -43,6 +44,8 @@ export function HeroStage({ reflective, receiveShadows }: HeroStageProps) {
     if (!g) return
     const s = useAppStore.getState().sectionProgress
     g.position.y = floorY - smoothstep(0, 0.9, s) * 3
+    sceneState.floorY = g.position.y
+    sceneState.floorActive = s < 0.5
     // The contact shadow keeps its last frame when paused, so hide the whole floor off-stage.
     g.visible = s < 1.05
   })

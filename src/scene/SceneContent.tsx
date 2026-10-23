@@ -14,12 +14,13 @@ import { Backdrop } from './lighting/Backdrop'
 import { StageLights } from './lighting/StageLights'
 import { StudioEnvironment } from './lighting/StudioEnvironment'
 import { ThemeAnimator } from './lighting/ThemeAnimator'
-import { DropletBurst } from './liquid/DropletBurst'
 import { Fizz } from './liquid/Fizz'
 import { FruitBurst } from './liquid/FruitBurst'
 import { LiquidBlobs } from './liquid/LiquidBlobs'
-import { LiquidRibbon } from './liquid/LiquidRibbon'
-import { SplashCrown } from './liquid/SplashCrown'
+import { LiquidSim } from './liquid/LiquidSim'
+import { SpillDrops } from './liquid/SpillDrops'
+import { SpillSurface } from './liquid/SpillSurface'
+import { Spray } from './liquid/Spray'
 import { ReadySignal } from './ReadySignal'
 
 /** Everything inside the canvas. Suspends until the procedural textures exist. */
@@ -52,9 +53,10 @@ export function SceneContent() {
       <SectionFruits assets={assets} />
 
       <LiquidBlobs />
-      <SplashCrown />
-      <LiquidRibbon />
-      <DropletBurst />
+      <LiquidSim />
+      {tier !== 'low' && <SpillSurface />}
+      <SpillDrops loneOnly={tier !== 'low'} />
+      <Spray />
       <FruitBurst assets={assets} />
       <Fizz />
 

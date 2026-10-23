@@ -130,6 +130,7 @@ export function HeroCans({ assets, castShadows }: HeroCansProps) {
         sceneState.canCenter.setFromMatrixPosition(group.matrixWorld)
         sceneState.canTop.copy(topLocal).applyMatrix4(group.matrixWorld)
         sceneState.canScale = m.pose.scale
+        sceneState.canMatrix.copy(group.matrixWorld)
       }
     }
     initialized.current = true

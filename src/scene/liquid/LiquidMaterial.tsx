@@ -24,9 +24,16 @@ function TransmissiveLiquid({ thickness, high }: { thickness: number; high: bool
   useFrame(() => {
     const m = ref.current
     if (!m) return
-    m.color.copy(sceneState.theme.liquid).lerp(WHITE, 0.25)
+    // Split the tint between the surface colour and absorption through the body. Both multiply in linear
+    // space, so putting the full colour in each would square it (orange turns red). Thick parts end up
+    // deep and saturated and thin edges stay light, as real soda does.
+    m.color.copy(sceneState.theme.liquid).lerp(WHITE, 0.6)
     m.attenuationColor.copy(sceneState.theme.liquid)
+    // Light scattered inside the drink, so it glows like backlit soda instead of going dark over a dark backdrop.
+    m.emissive.copy(sceneState.theme.liquid)
   })
+  // One clean water interface: no clearcoat (a second highlight reads as plastic) and almost no dispersion
+  // or distortion noise (those read as glass).
   return (
     <MeshTransmissionMaterial
       // drei types this ref as a props object; the runtime instance is a MeshPhysicalMaterial subclass.
@@ -38,16 +45,15 @@ function TransmissiveLiquid({ thickness, high }: { thickness: number; high: bool
       transmission={1}
       thickness={thickness}
       ior={1.34}
-      roughness={0.04}
-      chromaticAberration={high ? 0.06 : 0.025}
-      anisotropicBlur={0.08}
-      distortion={0.12}
-      distortionScale={0.4}
-      temporalDistortion={0.08}
-      attenuationDistance={0.9}
-      clearcoat={1}
-      clearcoatRoughness={0.02}
-      envMapIntensity={1.6}
+      roughness={0.02}
+      chromaticAberration={high ? 0.012 : 0}
+      anisotropicBlur={0}
+      distortion={0.03}
+      distortionScale={0.3}
+      temporalDistortion={0}
+      attenuationDistance={1.4}
+      emissiveIntensity={0.14}
+      envMapIntensity={1.3}
       specularIntensity={1}
     />
   )
@@ -55,21 +61,25 @@ function TransmissiveLiquid({ thickness, high }: { thickness: number; high: bool
 
 const WHITE = new THREE.Color('#ffffff')
 
-/** Adds a fresnel rim and fresnel-driven opacity to the standard material. */
+/** Low tier: a saturated core where the liquid faces you, a bright fresnel rim at grazing angles and a sharp wet glint. */
 function addFresnel(shader: THREE.WebGLProgramParametersWithUniforms) {
   shader.fragmentShader = shader.fragmentShader.replace(
     '#include <opaque_fragment>',
     /* glsl */ `
     #include <opaque_fragment>
-    float facing = abs(dot(normalize(normal), normalize(vViewPosition)));
-    float fresnel = pow(1.0 - facing, 2.2);
-    gl_FragColor.rgb += diffuseColor.rgb * 0.35 + fresnel * vec3(0.55);
-    gl_FragColor.a = mix(0.55, 1.0, fresnel);
+    vec3 n = normalize(normal);
+    vec3 viewDir = normalize(vViewPosition);
+    float facing = abs(dot(n, viewDir));
+    float fresnel = pow(1.0 - facing, 3.0);
+    vec3 core = diffuseColor.rgb * mix(0.55, 1.1, fresnel);
+    float glint = pow(max(dot(reflect(-viewDir, n), normalize(vec3(-0.35, 0.8, 0.5))), 0.0), 60.0);
+    gl_FragColor.rgb = mix(core, vec3(1.0), fresnel * 0.6) + gl_FragColor.rgb * 0.35 + glint;
+    gl_FragColor.a = mix(0.72, 1.0, fresnel);
     `,
   )
 }
 
-const cheapCacheKey = () => 'fizzora-cheap-liquid'
+const cheapCacheKey = () => 'fizzora-cheap-liquid-v2'
 
 function CheapLiquidMaterial() {
   const ref = useRef<THREE.MeshStandardMaterial>(null)

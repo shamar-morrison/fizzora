@@ -14,6 +14,11 @@ export const sceneState = {
   canTop: new THREE.Vector3(0, 1, 0),
   canCenter: new THREE.Vector3(),
   canScale: 1,
+  /** World matrix of the featured can; the liquid sim emits along its axes and collides with it. */
+  canMatrix: new THREE.Matrix4(),
+  /** World height of the hero floor, and whether falling liquid should land on it. */
+  floorY: -0.52,
+  floorActive: true,
   /** Animated theme colors, eased toward the active drink every frame. */
   theme: {
     accent: new THREE.Color(DRINKS[0].colors.accent),
